@@ -1,0 +1,471 @@
+1. Folder FFTW PETSC code:
+	1.1 Find folder:
+		$ cd SVL_3D_FFTW_SWAP_PETSCSCALAR
+
+	1.2 Clean the folder
+		$ bash SVL_Clean.sh
+
+2. Two files are used to execute the program. They are imported to set up the correct execution of the program (Makefile, SVL.sh)
+
+      2.1  The following lines set the configuration on PETSC
+
+	# petsc 3.5.4
+	#export PETSC_DIR=~/Desktop/PETSC/petsc-3.5.4
+	#export PETSC_ARCH=linux-gnu-complex           # PetscScalar is Complex
+
+	# petsc 3.7.6
+	export PETSC_DIR=~/Desktop/PETSC/petsc-3.7.6
+	export PETSC_ARCH=linux-gnu-complex            # PetscScalar is Complex
+
+      2.2 Makefile:
+		$ vi Makefile
+
+		CFLAGS	         = 
+		FFLAGS	         = 
+		CPPFLAGS         = 
+		FPPFLAGS         =
+		LOCDIR           =  					# Working folder
+		EXAMPLESC        =  					# *.c or *.cpp file names here
+		EXAMPLESF        =
+		MANSEC           = 
+		LIBS             = -lfftw3 -lm 		        	# serial fftw libraries
+		MPI_LIBS         = -lfftw3_mpi -lfftw3 -lm 		# parallel fftw libraries	
+		TRASH	         :=  *.*~  *~  *.o 
+
+		# Note: PETSC main -> SVL_PETSC_DFT_MAIN.c
+
+		SOURCE_PETSC     := SVL_PETSC_3D_DFT_MAIN_ORNL.c\
+				SVL_PETSC_3D_UNIT_CELL.c\
+				SVL_PETSC_3D_FFTW_SWAP_METHOD_1.c\
+				SVL_PETSC_3D_FFTW_SWAP_METHOD_2.c\
+				SVL_PETSC_1D_FFTW.c\
+				SVL_PETSC_3D_FFTW.c\
+				SVL_PETSC_3D_SWAP_QUADRANTS.c\
+				SVL_PETSC_3D_TRANSPOSE_1_COMPLEX.c\
+				SVL_PETSC_3D_TRANSPOSE_2_COMPLEX.c\
+				SVL_PETSC_3D_TRANSPOSE_3_COMPLEX.c\
+				SVL_PETSC_3D_TRANSPOSE_4_COMPLEX.c\
+				SVL_PETSC_3D_IFFTW.c\
+				SVL_PETSC_3D_TRUNCATED_FFTW_ARRAY.c\
+				SAVE_1D_TO_3D_ARRAY_REAL.c\
+				SAVE_1D_TO_3D_ARRAY_COMPLEX.c\
+
+		OBJECTS_PETSC    := $(SOURCE_PETSC:.c=.o)
+		EXECUTABLE_PETSC := OUTPUT_PETSC
+
+		# Version 3.5.4: These Makefiles lines must be updated every time you Update your petsc version.
+		#include ${PETSC_DIR}/conf/variables
+		#include ${PETSC_DIR}/conf/rules
+
+		# Version 3.7.6: These Makefiles lines must be updated every time you Update your petsc version.
+		include ${PETSC_DIR}/lib/petsc/conf/variables
+		include ${PETSC_DIR}/lib/petsc/conf/rules
+
+		SVL_PETSC: $: $(OBJECTS_PETSC) chkopts
+			-${CLINKER} -o $(EXECUTABLE_PETSC) $(OBJECTS_PETSC) ${PETSC_LIB} ${LIBS}
+			 ${RM} $(OBJECTS_PETSC) $(TRASH)
+			 #mpirun -np 4 ./OUTPUT_PETSC -ksp_type cg -ksp_converged_reason > log.txt
+			 mpirun -np 4 ./OUTPUT_PETSC > log.txt
+
+
+      2.3 SVL.sh 
+
+		#!/bin/sh
+
+		# petsc 3.5.4
+		#export PETSC_DIR=~/Desktop/PETSC/petsc-3.5.4
+		#export PETSC_ARCH=linux-gnu-complex #PetscScalar is Complex
+
+		# petsc 3.7.6
+		export PETSC_DIR=~/Desktop/PETSC/petsc-3.7.6
+		export PETSC_ARCH=linux-gnu-complex #PetscScalar is Complex
+
+		make SVL_PETSC
+		#mpirun -np 4 out_parallel
+
+
+3. Let us compile, execute and plot step-by-step. There are two ways to compile, execute and plot. The first one requires multiple steps to complete the process. 
+
+
+          3.1 Call PETSC, be careful with the version
+		$ export PETSC_DIR=~/Desktop/PETSC/petsc-3.7.6
+		$ export PETSC_ARCH=linux-gnu-complex 
+
+	3.2 Compile PESTC: make compile and output the executable file OUT_PETSC
+
+		$ make SVL_PETSC
+		$ ll
+		-rw-rw-r-- 1 henry henry   759360 Nov  1 19:27 OUTPUT_FFTW_IMAG
+		-rw-rw-r-- 1 henry henry   759499 Nov  1 19:27 OUTPUT_FFTW_REAL
+		-rw-rw-r-- 1 henry henry   753711 Nov  1 19:27 OUTPUT_INV_FFTW_IMAG
+		-rw-rw-r-- 1 henry henry   744397 Nov  1 19:27 OUTPUT_INV_FFTW_REAL
+		-rwxrwxr-x 1 henry henry   280912 Nov  1 19:27 OUTPUT_PETSC*
+		-rw-rw-r-- 1 henry henry   759360 Nov  1 19:27 OUTPUT_SWAP_IMAG
+		-rw-rw-r-- 1 henry henry   759499 Nov  1 19:27 OUTPUT_SWAP_REAL
+		-rw-rw-r-- 1 henry henry     1637 Nov  1 19:27 OUTPUT_TRUNC_FFTW_IMAG
+		-rw-rw-r-- 1 henry henry     1624 Nov  1 19:27 OUTPUT_TRUNC_FFTW_REAL
+		-rw-rw-r-- 1 henry henry   721152 Nov  1 19:27 OUTPUT_UNIT_CELL_REAL
+
+	3.3. Plot the OUTPUTs : The results can be visualizing using OCTAVE
+
+		$ octave PLOT_OUTPUT_2D_METHOD_2.m
+
+
+4. The second one executed a bash file (SVL.sh) with compile, execute and plot in one step.
+
+          $ bash SVL_Clean.sh
+	total 156
+	drwx------ 3 henry henry  4096 Nov  2 19:05 ./
+	drwxr-xr-x 6 henry henry  4096 Nov  2 18:58 ../
+	-rw------- 1 henry henry   106 Mar 15  2018 Clean.sh
+	-rw------- 1 henry henry  3222 Nov  2 18:36 Makefile
+	-rw-rw-r-- 1 henry henry  5860 Nov  2 18:56 PLOT_3D_CYLINDRICAL_VOXEL.m
+	-rw-r--r-- 1 henry henry 10292 Nov  1 19:43 README
+	-rw------- 1 henry henry  1748 Mar 15  2018 SAVE_1D_TO_3D_ARRAY_COMPLEX.c
+	-rw------- 1 henry henry  1108 Mar 15  2018 SAVE_1D_TO_3D_ARRAY_REAL.c
+	-rw-rw-r-- 1 henry henry  2709 May 15 15:40 SVL_boxes.m
+	-rw------- 1 henry henry   121 Nov  2 19:00 SVL_Clean.sh
+	-rw------- 1 henry henry    30 Nov  2 18:43 SVL.data
+	-rw------- 1 henry henry  3695 Mar 15  2018 SVL_PETSC_1D_FFTW.c
+	-rw------- 1 henry henry 15247 Nov  2 18:50 SVL_PETSC_3D_DFT_MAIN_ORNL.c
+	-rw------- 1 henry henry  5369 Mar 15  2018 SVL_PETSC_3D_FFTW.c
+	-rw------- 1 henry henry  1390 Mar 15  2018 SVL_PETSC_3D_FFTW_SWAP.c
+	-rw------- 1 henry henry  2619 Mar 15  2018 SVL_PETSC_3D_FFTW_SWAP_METHOD_1.c
+	-rw------- 1 henry henry  9972 Mar 15  2018 SVL_PETSC_3D_FFTW_SWAP_METHOD_2.c
+	-rw------- 1 henry henry  2400 Mar 15  2018 SVL_PETSC_3D_GRADING_VECTOR.c
+	-rw------- 1 henry henry  5774 Nov  2 18:40 SVL_PETSC_3D_HEADER.h
+	-rw------- 1 henry henry  3692 Mar 15  2018 SVL_PETSC_3D_IFFTW.c
+	-rw------- 1 henry henry  2142 Mar 15  2018 SVL_PETSC_3D_SWAP_QUADRANTS.c
+	-rw------- 1 henry henry  1216 Mar 15  2018 SVL_PETSC_3D_TRANSPOSE_1_COMPLEX.c
+	-rw------- 1 henry henry  1219 Mar 15  2018 SVL_PETSC_3D_TRANSPOSE_2_COMPLEX.c
+	-rw------- 1 henry henry  1484 Mar 15  2018 SVL_PETSC_3D_TRANSPOSE_3_COMPLEX.c
+	-rw------- 1 henry henry  1304 Mar 15  2018 SVL_PETSC_3D_TRANSPOSE_4_COMPLEX.c
+	-rw------- 1 henry henry  3307 Mar 15  2018 SVL_PETSC_3D_TRUNCATED_FFTW_ARRAY.c
+	-rw------- 1 henry henry  2987 Mar 15  2018 SVL_PETSC_3D_UNIT_CELL.c
+	-rw------- 1 henry henry   306 Nov  2 19:04 SVL.sh
+
+
+	$ bash SVL.sh
+	total 976
+	drwx------ 3 henry henry   4096 Nov  2 19:05 ./
+	drwxr-xr-x 6 henry henry   4096 Nov  2 18:58 ../
+	-rw------- 1 henry henry    106 Mar 15  2018 Clean.sh
+	-rw-rw-r-- 1 henry henry   3900 Nov  2 19:05 log.txt
+	-rw------- 1 henry henry   3222 Nov  2 18:36 Makefile
+	-rw-rw-r-- 1 henry henry  45312 Nov  2 19:05 OUTPUT_FFTW_IMAG
+	-rw-rw-r-- 1 henry henry  48732 Nov  2 19:05 OUTPUT_FFTW_REAL
+	-rw-rw-r-- 1 henry henry  45312 Nov  2 19:05 OUTPUT_INV_FFTW_IMAG
+	-rw-rw-r-- 1 henry henry  46571 Nov  2 19:05 OUTPUT_INV_FFTW_REAL
+	-rwxrwxr-x 1 henry henry 287168 Nov  2 19:05 OUTPUT_PETSC*
+	-rw-rw-r-- 1 henry henry  45312 Nov  2 19:05 OUTPUT_SWAP_IMAG
+	-rw-rw-r-- 1 henry henry  48732 Nov  2 19:05 OUTPUT_SWAP_REAL
+	-rw-rw-r-- 1 henry henry  24336 Nov  2 19:05 OUTPUT_TRUNC_FFTW_IMAG
+	-rw-rw-r-- 1 henry henry  26355 Nov  2 19:05 OUTPUT_TRUNC_FFTW_REAL
+	-rw-rw-r-- 1 henry henry  45312 Nov  2 19:05 OUTPUT_UNIT_CELL_IMAG
+	-rw-rw-r-- 1 henry henry  45312 Nov  2 19:05 OUTPUT_UNIT_CELL_REAL
+	-rw-rw-r-- 1 henry henry  45312 Nov  2 19:05 OUTPUT_UNIT_CELL_ZERO_IMAG
+	-rw-rw-r-- 1 henry henry  45312 Nov  2 19:05 OUTPUT_UNIT_CELL_ZERO_REAL
+	-rw-rw-r-- 1 henry henry   5860 Nov  2 18:56 PLOT_3D_CYLINDRICAL_VOXEL.m
+	-rw-r--r-- 1 henry henry  10292 Nov  1 19:43 README
+	-rw------- 1 henry henry   1748 Mar 15  2018 SAVE_1D_TO_3D_ARRAY_COMPLEX.c
+	-rw------- 1 henry henry   1108 Mar 15  2018 SAVE_1D_TO_3D_ARRAY_REAL.c
+	-rw-rw-r-- 1 henry henry   2709 May 15 15:40 SVL_boxes.m
+	-rw------- 1 henry henry    121 Nov  2 19:00 SVL_Clean.sh
+	-rw------- 1 henry henry     30 Nov  2 18:43 SVL.data
+	-rw------- 1 henry henry   3695 Mar 15  2018 SVL_PETSC_1D_FFTW.c
+	-rw------- 1 henry henry  15247 Nov  2 18:50 SVL_PETSC_3D_DFT_MAIN_ORNL.c
+	-rw------- 1 henry henry   5369 Mar 15  2018 SVL_PETSC_3D_FFTW.c
+	-rw------- 1 henry henry   1390 Mar 15  2018 SVL_PETSC_3D_FFTW_SWAP.c
+	-rw------- 1 henry henry   2619 Mar 15  2018 SVL_PETSC_3D_FFTW_SWAP_METHOD_1.c
+	-rw------- 1 henry henry   9972 Mar 15  2018 SVL_PETSC_3D_FFTW_SWAP_METHOD_2.c
+	-rw------- 1 henry henry   2400 Mar 15  2018 SVL_PETSC_3D_GRADING_VECTOR.c
+	-rw------- 1 henry henry   5774 Nov  2 18:40 SVL_PETSC_3D_HEADER.h
+	-rw------- 1 henry henry   3692 Mar 15  2018 SVL_PETSC_3D_IFFTW.c
+	-rw------- 1 henry henry   2142 Mar 15  2018 SVL_PETSC_3D_SWAP_QUADRANTS.c
+	-rw------- 1 henry henry   1216 Mar 15  2018 SVL_PETSC_3D_TRANSPOSE_1_COMPLEX.c
+	-rw------- 1 henry henry   1219 Mar 15  2018 SVL_PETSC_3D_TRANSPOSE_2_COMPLEX.c
+	-rw------- 1 henry henry   1484 Mar 15  2018 SVL_PETSC_3D_TRANSPOSE_3_COMPLEX.c
+	-rw------- 1 henry henry   1304 Mar 15  2018 SVL_PETSC_3D_TRANSPOSE_4_COMPLEX.c
+	-rw------- 1 henry henry   3307 Mar 15  2018 SVL_PETSC_3D_TRUNCATED_FFTW_ARRAY.c
+	-rw------- 1 henry henry   2987 Mar 15  2018 SVL_PETSC_3D_UNIT_CELL.c
+	-rw------- 1 henry henry    306 Nov  2 19:04 SVL.sh
+
+5. Plot using matlab.
+	-rw-rw-r-- 1 henry henry   2709 May 15 15:40 SVL_boxes.m
+	-rw-rw-r-- 1 henry henry   5860 Nov  2 18:56 PLOT_3D_CYLINDRICAL_VOXEL.m
+
+	$ vi PLOT_3D_CYLINDRICAL_VOXEL.m
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+	close all   % close all open such as : figures, fuctions, etc
+	clc         % clear the command prompt
+	clear all   % clear all variables
+	clf         % clear functions
+
+	% Grid size
+	Sx = 1; % x-axis unit cell grid size
+	Sy = 1; % y-axis unit cell grid size
+	Sz = 1; % y-axis unit cell grid size
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%    Loading Data 
+	%%%%%%%%%%%%%%%%%%%%%%%%%%
+	load ('OUTPUT_UNIT_CELL_REAL')
+	load ('OUTPUT_FFTW_REAL')
+	load ('OUTPUT_FFTW_IMAG')
+	load ('OUTPUT_INV_FFTW_REAL')
+	load ('OUTPUT_INV_FFTW_IMAG')
+	load ('OUTPUT_SWAP_REAL')
+	load ('OUTPUT_SWAP_IMAG')
+	load ('OUTPUT_TRUNC_FFTW_REAL')
+	load ('OUTPUT_TRUNC_FFTW_IMAG')
+	%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%    Length Data 
+	%%%%%%%%%%%%%%%%%%%%%%%%%%
+	M1_rows = length(OUTPUT_UNIT_CELL_REAL(:,1));       % Unit Cell matrix    	(Nx x Ny x Nz)
+	M1_cols = length(OUTPUT_UNIT_CELL_REAL(1,:));       % Unit Cell matrix    	(Nx x Ny x Nz)
+
+	M2_rows = length(OUTPUT_FFTW_REAL(:,1));       	    % FFTW REAL matrix    	(Nx x Ny x Nz)
+	M2_cols = length(OUTPUT_FFTW_REAL(1,:));            % FFTW REAL matrix    	(Nx x Ny x Nz)
+
+	M3_rows = length(OUTPUT_INV_FFTW_REAL(:,1));        % FFTW REAL matrix    	(Nx x Ny x Nz)
+	M3_cols = length(OUTPUT_INV_FFTW_REAL(1,:));        % FFTW REAL matrix    	(Nx x Ny x Nz)
+
+	M4_rows = length(OUTPUT_SWAP_REAL(:,1));            % FFTW REAL matrix    	(Nx x Ny x Nz)
+	M4_cols = length(OUTPUT_SWAP_REAL(1,:));            % FFTW REAL matrix    	(Nx x Ny x Nz)
+
+	M5_rows = length(OUTPUT_TRUNC_FFTW_REAL(:,1));      % TRUC FFTW REAL matrix     (NM x NN x NP)
+	M5_cols = length(OUTPUT_TRUNC_FFTW_REAL(1,:));      % TRUC FFTW REAL matrix     (NM x NN x NP)
+
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%    Array Data 
+	%%%%%%%%%%%%%%%%%%%%%%%%%%
+	% figure 1
+	for j = 1 : M1_cols   U1(:,:,j) = OUTPUT_UNIT_CELL_REAL((j-1)*M1_cols+1 : j*M1_cols,:); end
+	% figure 2
+	for j = 1 : M2_cols   U3(:,:,j) = OUTPUT_FFTW_REAL((j-1)*M2_cols+1 : j*M2_cols,:); end
+	for j = 1 : M2_cols   U4(:,:,j) = OUTPUT_FFTW_IMAG((j-1)*M2_cols+1 : j*M2_cols,:); end
+	for j = 1 : M3_cols   U5(:,:,j) = OUTPUT_INV_FFTW_REAL((j-1)*M3_cols+1 : j*M3_cols,:); end
+	for j = 1 : M3_cols   U6(:,:,j) = OUTPUT_INV_FFTW_IMAG((j-1)*M3_cols+1 : j*M3_cols,:); end
+	for j = 1 : M4_cols   U7(:,:,j) = OUTPUT_SWAP_REAL((j-1)*M4_cols+1 : j*M4_cols,:); end
+	for j = 1 : M4_cols   U8(:,:,j) = OUTPUT_SWAP_IMAG((j-1)*M4_cols+1 : j*M4_cols,:); end
+	% figure 3
+	for j = 1 : M5_cols   U9(:,:,j)  = OUTPUT_TRUNC_FFTW_REAL((j-1)*M5_cols+1 : j*M5_cols,:); end
+	for j = 1 : M5_cols   U10(:,:,j) = OUTPUT_TRUNC_FFTW_IMAG((j-1)*M5_cols+1 : j*M5_cols,:); end
+	%%%%%%%%%%%%%%%%%%%%%%%%%%
+	%   Subplot Array Data 
+	%%%%%%%%%%%%%%%%%%%%%%%%%%
+	a=0;
+	b=1;
+
+	% OPEN FIGURE WINDOW
+	figure(1);
+	% % OPEN FIGURE WINDOW
+	%figure('Color','w');
+
+	subplot(1,3,1)
+	Nx = M3_cols;
+	Ny = Nx;
+	Nz = Nx;
+	s = 0.8; % control little cubes size
+	ff = .4; % control big cube size
+	SVL_boxes(ff,a,b,s,Sx,Sy,Sz,Nx,Ny,Nz,U3)
+	%saveas(gcf,'3D_FFTW.eps')
+
+	subplot(1,3,2)
+	Nx = M4_cols;
+	Ny = Nx;
+	Nz = Nx;
+	s = 0.8;
+	ff = .4;
+	SVL_boxes(ff,a,b,s,Sx,Sy,Sz,Nx,Ny,Nz,U7)
+	% %saveas(gcf,'3D_SWAP.eps')
+	% 
+	subplot(1,3,3)
+	Nx = M5_cols;
+	Ny = Nx;
+	Nz = Nx;
+	s = 0.8;
+	ff = .43;
+	SVL_boxes(ff,a,b,s,Sx,Sy,Sz,Nx,Ny,Nz,U9)
+	% %saveas(gcf,'3D_TRUNCATE_FFTW.eps')
+
+	vi SVL_boxes.m
+	function [] = SVL_boxes(ff,a,b,s,Sx,Sy,Sz,Nx,Ny,Nz,A)
+
+	% % % OPEN FIGURE WINDOW
+	% figure('Color','w');
+
+	% DRAW THE VOXEL VIEW
+	hold on;
+
+	% ff=.5;
+	% a=0;
+	% b=1;
+
+	% % Step size
+	% dx = Sx/(Nx-1); % x-axis step size
+	% dy = Sy/(Ny-1); % y-axis step size
+	% dz = Sz/(Nz-1); % z-axis step size
+	% 
+	% xa = ff * ( a : dx : b);
+	% ya = ff * ( a : dx : b);
+	% za = ff * ( a : dx : b);
+
+	xa = ff*Sx*linspace(a,b,Nx);
+	ya = ff*Sy*linspace(a,b,Ny);
+	za = ff*Sz*linspace(a,b,Nz);
+
+	% increment
+	dx = xa(2) - xa(1);
+	dy = ya(2) - ya(1);
+	dz = za(2) - za(1);
+
+	[Y,X,Z] = meshgrid(ya,xa,za);
+
+	% MASK OF CUBES TO DRAW (THE CUTAWAY)
+	MAP = (X - Sx/2).^2 + (Y - Sy/2).^2 + (Z - Sz/2).^2;
+	MAP = MAP > (Sx/2)^2;
+
+	% GET METRICS
+	Amin = min(A(:));
+	Amax = max(A(:));
+
+	% SET COLORMAP
+	NC   = 256;
+	CMAP = parula(NC);
+
+	for nz = 1 : Nz
+	    z1 = za(nz) - s*dz/2;
+	    z2 = za(nz) + s*dz/2;
+	    
+	    for ny = 1 : Ny
+	        y1 = ya(ny) - s*dy/2;
+	        y2 = ya(ny) + s*dy/2;
+	        
+	        for nx = 1 : Nx
+		  x1 = xa(nx) - s*dx/2;
+		  x2 = xa(nx) + s*dx/2;
+		  
+		  if MAP(nx,ny,nz)
+		      % Color
+		      n = (A(nx,ny,nz) - Amin)/(Amax - Amin);
+		      n = 1 + floor(0.9999*n*NC);
+		      c = CMAP(n,:);
+		      
+		      %xlo
+		      x = x1 * [1 1 1 1 1];
+		      y = [ y1 y2 y2 y1 y1 ];
+		      z = [ z1 z1 z2 z2 z1 ];
+		      fill3(x,y,z,c);
+
+		      %xhi
+		      x = x2 * [1 1 1 1 1];
+		      y = [ y1 y2 y2 y1 y1 ];
+		      z = [ z1 z1 z2 z2 z1 ];
+		      fill3(x,y,z,c);
+
+		      %ylo
+		      x = [ x1 x2 x2 x1 x1 ];
+		      y = y1 * [1 1 1 1 1];
+		      z = [ z1 z1 z2 z2 z1 ];
+		      fill3(x,y,z,c);
+
+		      %yhi
+		      x = [ x1 x2 x2 x1 x1 ];
+		      y = y2 * [1 1 1 1 1];
+		      z = [ z1 z1 z2 z2 z1 ];
+		      fill3(x,y,z,c);
+
+		      %zlo
+		      x = [ x1 x2 x2 x1 x1 ];
+		      y = [ y1 y1 y2 y2 y1 ];
+		      z = z1 * [1 1 1 1 1];
+		      fill3(x,y,z,c);
+
+		      %zhi
+		      x = [ x1 x2 x2 x1 x1 ];
+		      y = [ y1 y1 y2 y2 y1 ];
+		      z = z2 * [1 1 1 1 1];
+		      fill3(x,y,z,c);
+		  end
+	        end
+	    end
+	end
+
+	% SET GRAPHICS VIEW
+	%hold off;
+	axis equal tight;
+	view(120,30);
+	xlabel('$p$','Interpreter','LaTex');
+	ylabel('$q$','Interpreter','LaTex');
+	zlabel('$r$','Interpreter','LaTex','Rotation',0);
+	%title('Voxel Visualization');
+	set(gca,'FontSize',25);
+	set(gca,'xtick',[])
+	set(gca,'ytick',[])
+	set(gca,'ztick',[])
+	%colormap hot %(parula(5))%winter
+	colorbar
+	%set(gca,'xticklabel',0:0.2:1)
+	%axis([a b a b])
+
+
+
+
+Note 1: The bash file compiles, executes and plots the entire PETSc code the results are shown using  Octave. Just wait !!!!
+
+Note 2: PETSC SOURCE CODE:
+
+	SOURCE_PETSC     := SVL_PETSC_2D_DFT_MAIN.c\
+			SVL_PETSC_2D_TRIANGLE_CELL.c\
+		          SVL_PETSC_2D_FFTW_SWAP_METHOD_1.c\
+		          SVL_PETSC_2D_FFTW_SWAP_METHOD_2.c\
+		          SVL_PETSC_2D_FFTW_SWAP_METHOD_3.c\
+		          SVL_PETSC_2D_FFTW_SWAP_METHOD_4.c\
+			SVL_PETSC_1D_FFTW.c\
+			SVL_PETSC_2D_FFTW.c\
+			SVL_PETSC_2D_TRANSPOSE_REAL.c\
+			SVL_PETSC_2D_TRANSPOSE_COMPLEX.c\
+			SVL_PETSC_2D_IFFTW.c\
+			SVL_PETSC_2D_SWAP_QUADRANTS.c\
+			SVL_PETSC_2D_TRUNCATE_FFTW_ARRAY.c\
+			SAVE_1D_To_2D_ARRAY_REAL.c\
+			SAVE_1D_To_2D_ARRAY_COMPLEX.c\
+
+Note 3, Executable: 
+		-rwxrwxr-x 1 henry henry   280912 Nov  1 19:34 OUTPUT_PETSC*
+
+Note 4: Petsc OUTPUTS to be plot for octave:
+	-rw-rw-r-- 1 henry henry   3900 Nov  2 19:06 log.txt
+	-rw-rw-r-- 1 henry henry  45312 Nov  2 19:06 OUTPUT_FFTW_IMAG
+	-rw-rw-r-- 1 henry henry  48732 Nov  2 19:06 OUTPUT_FFTW_REAL
+	-rw-rw-r-- 1 henry henry  45312 Nov  2 19:06 OUTPUT_INV_FFTW_IMAG
+	-rw-rw-r-- 1 henry henry  46571 Nov  2 19:06 OUTPUT_INV_FFTW_REAL
+	-rwxrwxr-x 1 henry henry 287168 Nov  2 19:06 OUTPUT_PETSC*
+	-rw-rw-r-- 1 henry henry  45312 Nov  2 19:06 OUTPUT_SWAP_IMAG
+	-rw-rw-r-- 1 henry henry  48732 Nov  2 19:06 OUTPUT_SWAP_REAL
+	-rw-rw-r-- 1 henry henry  24336 Nov  2 19:06 OUTPUT_TRUNC_FFTW_IMAG
+	-rw-rw-r-- 1 henry henry  26355 Nov  2 19:06 OUTPUT_TRUNC_FFTW_REAL
+	-rw-rw-r-- 1 henry henry  45312 Nov  2 19:06 OUTPUT_UNIT_CELL_IMAG
+	-rw-rw-r-- 1 henry henry  45312 Nov  2 19:06 OUTPUT_UNIT_CELL_REAL
+	-rw-rw-r-- 1 henry henry  45312 Nov  2 19:06 OUTPUT_UNIT_CELL_ZERO_IMAG
+	-rw-rw-r-- 1 henry henry  45312 Nov  2 19:06 OUTPUT_UNIT_CELL_ZERO_REAL
+
+
+Note 5; Log file, print wholw the steps and the performace time
+
+		-rw-rw-r-- 1 henry henry 18993476 Nov  1 19:34 log.txt
+
+		$ vi log.txt
+	============= END PROGRAM ===========
+
+	    Elapsed SERIAL: 0.161714 seconds
+
+	    Elapsed LOOP  : 0.000001 seconds
+
+	    Elapsed FULL  : 0.161715 seconds
+
+	=====================================
+

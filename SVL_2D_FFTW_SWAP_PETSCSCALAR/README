@@ -1,0 +1,231 @@
+1. Folder FFTW PETSC code:
+	1.1 Find folder:
+		$ cd SVL_2D_FFTW_SWAP_PETSCSCALAR
+
+	1.2 Clean the folder
+		$ bash SVL_Clean.sh
+
+2. Two files are used to execute the program. They are imported to set up the correct execution of the program (Makefile, SVL.sh)
+
+      2.1  The following lines set the configuration on PETSC
+
+	# petsc 3.5.4
+	#export PETSC_DIR=~/Desktop/PETSC/petsc-3.5.4
+	#export PETSC_ARCH=linux-gnu-complex           # PetscScalar is Complex
+
+	# petsc 3.7.6
+	export PETSC_DIR=~/Desktop/PETSC/petsc-3.7.6
+	export PETSC_ARCH=linux-gnu-complex            # PetscScalar is Complex
+
+      2.2 Makefile:
+		$ vi Makefile
+
+		CFLAGS	         = 
+		FFLAGS	         = 
+		CPPFLAGS         = 
+		FPPFLAGS         =
+		LOCDIR           =  					# Working folder
+		EXAMPLESC        =  					# *.c or *.cpp file names here
+		EXAMPLESF        =
+		MANSEC           = 
+		LIBS             = -lfftw3 -lm 		        	# serial fftw libraries
+		MPI_LIBS         = -lfftw3_mpi -lfftw3 -lm 		# parallel fftw libraries	
+		TRASH	         :=  *.*~  *~  *.o 
+
+		# Note: PETSC main -> SVL_PETSC_DFT_MAIN.c
+
+		SOURCE_PETSC     := SVL_PETSC_2D_DFT_MAIN.c\
+				    SVL_PETSC_2D_TRIANGLE_CELL.c\
+				SVL_PETSC_2D_FFTW_SWAP_METHOD_1.c\
+				SVL_PETSC_2D_FFTW_SWAP_METHOD_2.c\
+				SVL_PETSC_2D_FFTW_SWAP_METHOD_3.c\
+				SVL_PETSC_2D_FFTW_SWAP_METHOD_4.c\
+				    SVL_PETSC_1D_FFTW.c\
+				    SVL_PETSC_2D_FFTW.c\
+				    SVL_PETSC_2D_TRANSPOSE_REAL.c\
+				    SVL_PETSC_2D_TRANSPOSE_COMPLEX.c\
+				    SVL_PETSC_2D_IFFTW.c\
+				    SVL_PETSC_2D_SWAP_QUADRANTS.c\
+				    SVL_PETSC_2D_TRUNCATE_FFTW_ARRAY.c\
+				    SAVE_1D_To_2D_ARRAY_REAL.c\
+				    SAVE_1D_To_2D_ARRAY_COMPLEX.c\
+
+		OBJECTS_PETSC    := $(SOURCE_PETSC:.c=.o)
+		EXECUTABLE_PETSC := OUTPUT_PETSC
+
+		# Version 3.5.4: These Makefiles lines must be updated every time you Update your petsc version.
+		#include ${PETSC_DIR}/conf/variables
+		#include ${PETSC_DIR}/conf/rules
+
+		# Version 3.7.6: These Makefiles lines must be updated every time you Update your petsc version.
+		include ${PETSC_DIR}/lib/petsc/conf/variables
+		include ${PETSC_DIR}/lib/petsc/conf/rules
+
+		SVL_PETSC: $: $(OBJECTS_PETSC) chkopts
+			-${CLINKER} -o $(EXECUTABLE_PETSC) $(OBJECTS_PETSC) ${PETSC_LIB} ${LIBS}
+			 ${RM} $(OBJECTS_PETSC) $(TRASH)
+			 #mpirun -np 4 ./OUTPUT_PETSC -ksp_type cg -ksp_converged_reason > log.txt
+			 mpirun -np 4 ./OUTPUT_PETSC > log.txt
+
+
+      2.3 SVL.sh 
+
+		#!/bin/sh
+
+		# petsc 3.5.4
+		#export PETSC_DIR=~/Desktop/PETSC/petsc-3.5.4
+		#export PETSC_ARCH=linux-gnu-complex #PetscScalar is Complex
+
+		# petsc 3.7.6
+		export PETSC_DIR=~/Desktop/PETSC/petsc-3.7.6
+		export PETSC_ARCH=linux-gnu-complex #PetscScalar is Complex
+
+		make SVL_PETSC
+		#mpirun -np 4 out_parallel
+
+		#octave PLOT_OUTPUT_2D_METHOD_1.m
+		octave PLOT_OUTPUT_2D_METHOD_2.m
+
+
+3. Let us compile, execute and plot step-by-step. There are two ways to compile, execute and plot. The first one requires multiple steps to complete the process. 
+
+
+          3.1 Call PETSC, be careful with the version
+		$ export PETSC_DIR=~/Desktop/PETSC/petsc-3.7.6
+		$ export PETSC_ARCH=linux-gnu-complex 
+
+	3.2 Compile PESTC: make compile and output the executable file OUT_PETSC
+
+		$ make SVL_PETSC
+		$ ll
+		-rw-rw-r-- 1 henry henry   759360 Nov  1 19:27 OUTPUT_FFTW_IMAG
+		-rw-rw-r-- 1 henry henry   759499 Nov  1 19:27 OUTPUT_FFTW_REAL
+		-rw-rw-r-- 1 henry henry   753711 Nov  1 19:27 OUTPUT_INV_FFTW_IMAG
+		-rw-rw-r-- 1 henry henry   744397 Nov  1 19:27 OUTPUT_INV_FFTW_REAL
+		-rwxrwxr-x 1 henry henry   280912 Nov  1 19:27 OUTPUT_PETSC*
+		-rw-rw-r-- 1 henry henry   759360 Nov  1 19:27 OUTPUT_SWAP_IMAG
+		-rw-rw-r-- 1 henry henry   759499 Nov  1 19:27 OUTPUT_SWAP_REAL
+		-rw-rw-r-- 1 henry henry     1637 Nov  1 19:27 OUTPUT_TRUNC_FFTW_IMAG
+		-rw-rw-r-- 1 henry henry     1624 Nov  1 19:27 OUTPUT_TRUNC_FFTW_REAL
+		-rw-rw-r-- 1 henry henry   721152 Nov  1 19:27 OUTPUT_UNIT_CELL_REAL
+
+	3.3. Plot the OUTPUTs : The results can be visualizing using OCTAVE
+
+		$ octave PLOT_OUTPUT_2D_METHOD_2.m
+
+
+4. The second one executed a bash file (SVL.sh) with compile, execute and plot in one step.
+
+          $ bash SVL_Clean.sh
+	total 6340
+	drwxr-xr-x 2 henry henry    4096 Nov  1 19:31 ./
+	drwxr-xr-x 6 henry henry    4096 Nov  1 13:01 ../
+	-rw-r--r-- 1 henry henry    4581 Jan 10  2018 Makefile
+	-rw-r--r-- 1 henry henry 6353695 Apr  5  2016 octave-core
+	-rw-r--r-- 1 henry henry    7435 May  8 15:41 PLOT_OUTPUT_2D_METHOD_1.m
+	-rw-r--r-- 1 henry henry    5362 May  9 15:24 PLOT_OUTPUT_2D_METHOD_2.m
+	-rw-r--r-- 1 henry henry    6866 Feb 27  2016 README
+	-rw-r--r-- 1 henry henry    1531 Oct  6  2017 SAVE_1D_To_2D_ARRAY_COMPLEX.c
+	-rw-r--r-- 1 henry henry    1159 Oct  6  2017 SAVE_1D_To_2D_ARRAY_REAL.c
+	-rw-r--r-- 1 henry henry      95 Oct  2  2017 SVL_Clean.sh
+	-rw-r--r-- 1 henry henry    3994 Jan 12  2018 SVL_PETSC_1D_FFTW.c
+	-rw-r--r-- 1 henry henry    5089 Jan 10  2018 SVL_PETSC_2D_DFT_MAIN.c
+	-rw-r--r-- 1 henry henry    3757 Jan  2  2018 SVL_PETSC_2D_FFTW.c
+	-rw-r--r-- 1 henry henry    4014 Jan  3  2018 SVL_PETSC_2D_FFTW_SWAP_METHOD_1.c
+	-rw-r--r-- 1 henry henry    4666 Jan 12  2018 SVL_PETSC_2D_FFTW_SWAP_METHOD_2.c
+	-rw-r--r-- 1 henry henry    4322 Jan 10  2018 SVL_PETSC_2D_FFTW_SWAP_METHOD_3.c
+	-rw-r--r-- 1 henry henry    1734 Jan  3  2018 SVL_PETSC_2D_FFTW_SWAP_METHOD_4.c
+	-rw-r--r-- 1 henry henry    3515 Jan  3  2018 SVL_PETSC_2D_IFFTW.c
+	-rw-r--r-- 1 henry henry    3360 Oct  1  2017 SVL_PETSC_2D_IFFTW_TRUNC.c
+	-rw-r--r-- 1 henry henry    1365 Jan  1  2018 SVL_PETSC_2D_SWAP_QUADRANTS.c
+	-rw-r--r-- 1 henry henry    1001 Jan  3  2018 SVL_PETSC_2D_TRANSPOSE.c
+	-rw-r--r-- 1 henry henry    1017 Jan 12  2018 SVL_PETSC_2D_TRANSPOSE_COMPLEX.c
+	-rw-r--r-- 1 henry henry    1009 Jan 12  2018 SVL_PETSC_2D_TRANSPOSE_REAL.c
+	-rw-r--r-- 1 henry henry    1523 Jan  1  2018 SVL_PETSC_2D_TRIANGLE_CELL.c
+	-rw-r--r-- 1 henry henry    2567 Jan  1  2018 SVL_PETSC_2D_TRUNCATE_FFTW_ARRAY.c
+	-rw-r--r-- 1 henry henry    3550 Jan 10  2018 SVL_PETSC_Header.h
+	-rw-r--r-- 1 henry henry     363 Jan  2  2018 SVL.sh
+
+
+	$ bash SVL.sh
+	total 30328
+	drwxr-xr-x 2 henry henry     4096 Nov  1 19:34 ./
+	drwxr-xr-x 6 henry henry     4096 Nov  1 13:01 ../
+	-rw-rw-r-- 1 henry henry 18993476 Nov  1 19:34 log.txt
+	-rw-r--r-- 1 henry henry     4581 Jan 10  2018 Makefile
+	-rw-r--r-- 1 henry henry  6353695 Apr  5  2016 octave-core
+	-rw-rw-r-- 1 henry henry   759360 Nov  1 19:34 OUTPUT_FFTW_IMAG
+	-rw-rw-r-- 1 henry henry   759499 Nov  1 19:34 OUTPUT_FFTW_REAL
+	-rw-rw-r-- 1 henry henry   753711 Nov  1 19:34 OUTPUT_INV_FFTW_IMAG
+	-rw-rw-r-- 1 henry henry   744397 Nov  1 19:34 OUTPUT_INV_FFTW_REAL
+	-rwxrwxr-x 1 henry henry   280912 Nov  1 19:34 OUTPUT_PETSC*
+	-rw-rw-r-- 1 henry henry   759360 Nov  1 19:34 OUTPUT_SWAP_IMAG
+	-rw-rw-r-- 1 henry henry   759499 Nov  1 19:34 OUTPUT_SWAP_REAL
+	-rw-rw-r-- 1 henry henry     1637 Nov  1 19:34 OUTPUT_TRUNC_FFTW_IMAG
+	-rw-rw-r-- 1 henry henry     1624 Nov  1 19:34 OUTPUT_TRUNC_FFTW_REAL
+	-rw-rw-r-- 1 henry henry   721152 Nov  1 19:34 OUTPUT_UNIT_CELL_REAL
+	-rw-r--r-- 1 henry henry     7435 May  8 15:41 PLOT_OUTPUT_2D_METHOD_1.m
+	-rw-r--r-- 1 henry henry     5362 May  9 15:24 PLOT_OUTPUT_2D_METHOD_2.m
+	-rw-r--r-- 1 henry henry     6866 Feb 27  2016 README
+	-rw-r--r-- 1 henry henry     1531 Oct  6  2017 SAVE_1D_To_2D_ARRAY_COMPLEX.c
+	-rw-r--r-- 1 henry henry     1159 Oct  6  2017 SAVE_1D_To_2D_ARRAY_REAL.c
+	-rw-r--r-- 1 henry henry       95 Oct  2  2017 SVL_Clean.sh
+	-rw-r--r-- 1 henry henry     3994 Jan 12  2018 SVL_PETSC_1D_FFTW.c
+	-rw-r--r-- 1 henry henry     5089 Jan 10  2018 SVL_PETSC_2D_DFT_MAIN.c
+	-rw-r--r-- 1 henry henry     3757 Jan  2  2018 SVL_PETSC_2D_FFTW.c
+	-rw-r--r-- 1 henry henry     4014 Jan  3  2018 SVL_PETSC_2D_FFTW_SWAP_METHOD_1.c
+	-rw-r--r-- 1 henry henry     4666 Jan 12  2018 SVL_PETSC_2D_FFTW_SWAP_METHOD_2.c
+	-rw-r--r-- 1 henry henry     4322 Jan 10  2018 SVL_PETSC_2D_FFTW_SWAP_METHOD_3.c
+	-rw-r--r-- 1 henry henry     1734 Jan  3  2018 SVL_PETSC_2D_FFTW_SWAP_METHOD_4.c
+	-rw-r--r-- 1 henry henry     3515 Jan  3  2018 SVL_PETSC_2D_IFFTW.c
+	-rw-r--r-- 1 henry henry     3360 Oct  1  2017 SVL_PETSC_2D_IFFTW_TRUNC.c
+	-rw-r--r-- 1 henry henry     1365 Jan  1  2018 SVL_PETSC_2D_SWAP_QUADRANTS.c
+	-rw-r--r-- 1 henry henry     1001 Jan  3  2018 SVL_PETSC_2D_TRANSPOSE.c
+	-rw-r--r-- 1 henry henry     1017 Jan 12  2018 SVL_PETSC_2D_TRANSPOSE_COMPLEX.c
+	-rw-r--r-- 1 henry henry     1009 Jan 12  2018 SVL_PETSC_2D_TRANSPOSE_REAL.c
+	-rw-r--r-- 1 henry henry     1523 Jan  1  2018 SVL_PETSC_2D_TRIANGLE_CELL.c
+	-rw-r--r-- 1 henry henry     2567 Jan  1  2018 SVL_PETSC_2D_TRUNCATE_FFTW_ARRAY.c
+	-rw-r--r-- 1 henry henry     3550 Jan 10  2018 SVL_PETSC_Header.h
+	-rw-r--r-- 1 henry henry      363 Jan  2  2018 SVL.sh
+
+
+Note 1: The bash file compiles, executes and plots the entire PETSc code the results are shown using  Octave. Just wait !!!!
+
+Note 2: PETSC SOURCE CODE:
+
+	SOURCE_PETSC     := SVL_PETSC_2D_DFT_MAIN.c\
+			SVL_PETSC_2D_TRIANGLE_CELL.c\
+		          SVL_PETSC_2D_FFTW_SWAP_METHOD_1.c\
+		          SVL_PETSC_2D_FFTW_SWAP_METHOD_2.c\
+		          SVL_PETSC_2D_FFTW_SWAP_METHOD_3.c\
+		          SVL_PETSC_2D_FFTW_SWAP_METHOD_4.c\
+			SVL_PETSC_1D_FFTW.c\
+			SVL_PETSC_2D_FFTW.c\
+			SVL_PETSC_2D_TRANSPOSE_REAL.c\
+			SVL_PETSC_2D_TRANSPOSE_COMPLEX.c\
+			SVL_PETSC_2D_IFFTW.c\
+			SVL_PETSC_2D_SWAP_QUADRANTS.c\
+			SVL_PETSC_2D_TRUNCATE_FFTW_ARRAY.c\
+			SAVE_1D_To_2D_ARRAY_REAL.c\
+			SAVE_1D_To_2D_ARRAY_COMPLEX.c\
+
+Note 3, Executable: 
+		-rwxrwxr-x 1 henry henry   280912 Nov  1 19:34 OUTPUT_PETSC*
+
+Note 4: Petsc OUTPUTS to be plot for octave:
+		-rw-rw-r-- 1 henry henry   759360 Nov  1 19:34 OUTPUT_FFTW_IMAG
+		-rw-rw-r-- 1 henry henry   759499 Nov  1 19:34 OUTPUT_FFTW_REAL
+		-rw-rw-r-- 1 henry henry   753711 Nov  1 19:34 OUTPUT_INV_FFTW_IMAG
+		-rw-rw-r-- 1 henry henry   744397 Nov  1 19:34 OUTPUT_INV_FFTW_REAL
+		-rw-rw-r-- 1 henry henry   759360 Nov  1 19:34 OUTPUT_SWAP_IMAG
+		-rw-rw-r-- 1 henry henry   759499 Nov  1 19:34 OUTPUT_SWAP_REAL
+		-rw-rw-r-- 1 henry henry     1637 Nov  1 19:34 OUTPUT_TRUNC_FFTW_IMAG
+		-rw-rw-r-- 1 henry henry     1624 Nov  1 19:34 OUTPUT_TRUNC_FFTW_REAL
+		-rw-rw-r-- 1 henry henry   721152 Nov  1 19:34 OUTPUT_UNIT_CELL_REAL
+
+Note 5; Log file, print wholw the steps and the performace time
+
+		-rw-rw-r-- 1 henry henry 18993476 Nov  1 19:34 log.txt
+
+		$ vi log.txt
+		   Elapsed: 2.176756 seconds
